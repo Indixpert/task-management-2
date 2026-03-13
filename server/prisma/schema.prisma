@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  boards    BoardMember[]
+  assignedTasks Task[]   @relation("assignedTo")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  name      String
+  members   BoardMember[]
+  lists     TaskList[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BoardMember {
+  boardId String
+  userId  String
+  role    String // e.g., 'ADMIN', 'MEMBER'
+  board   Board  @relation(fields: [boardId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@id([boardId, userId])
+}
+
+model TaskList {
+  id        String   @id @default(cuid())
+  title     String
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id])
+  tasks     Task[]
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  listId      String
+  list        TaskList @relation(fields: [listId], references: [id])
+  assignedToId String?
+  assignedTo  User?    @relation("assignedTo", fields: [assignedToId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
